@@ -1,0 +1,231 @@
+﻿@page "/counter"
+@inject IModalService modal  
+
+@using SQLite
+
+@using SecurHub.Data
+@using SecurHub.Services
+@using System.Data
+@using System.Reflection
+@using SecurHub.Models
+@using System.ComponentModel.DataAnnotations
+<style>
+#tblAreas { border: solid; 
+}
+.styled-table thead tr {
+    background-color: #00bc70;
+    color: #ffffff;
+    text-align: left;
+}
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+}
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+h2 {
+  color: #00bc70;
+  font-family: verdana;
+  font-size: 200%;
+
+}
+button {
+    background-color: white;
+    color: #00bc70;
+    border: 2px groove #4CAF50; /* Green */
+    cursor: pointer;
+   
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color:#00bc70;
+  color: white;
+  text-align: center;
+}
+
+</style>
+ 
+<center><h2>Areas</h2></center>
+
+<button class="btn btn-secondary" type="submit" >Receive</button>
+
+@if (AreaReceived.Rows.Count==0)
+{
+	 <table id="tblAreas" class="styled-table" cellpadding="0" onscroll="" cellspacing="0">
+		<thead>
+			<tr>
+				<th style="width:25px">ID</th>
+				<th style="width:50px"></th>
+				<th style="width:70px">Description</th>
+				<th style="width:60px">P1 Description</th>
+                <th style="width:60px">P2 Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (Areas ar in AreasLst)
+			{
+				
+                      <tr>
+                <td class="CustomerId">
+                    <span>@ar.Area_Id_Pk</span>
+                </td>
+                <td class="Name">
+              @if (ar.Area_Status.Equals(1))
+                {
+                  <input type="checkbox" contentEditable="true" checked @oninput="CheckboxChanged"  @onclick="@(()=>getId(ar.Area_Id_Pk))"/>
+                }
+                    else
+                {
+                  <input type="checkbox" contentEditable="true"  @oninput="CheckboxChanged" @onclick="@(()=>getId(ar.Area_Id_Pk))"/>
+                }
+                  
+                </td>
+
+      <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind=ar.Area_Description class="border-none"></td>
+                       <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind=ar.Area_Partition_1 class="border-none"></td>
+      <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind=ar.Area_Partition_2 class="border-none"></td>
+            </tr>
+			}
+		</tbody>
+	</table>
+}
+else
+{
+	 <table id="tblAreas" class="styled-table" cellpadding="0" onscroll="" cellspacing="0">
+		<thead>
+			<tr>
+				<th style="width:25px">ID</th>
+				<th style="width:50px"></th>
+				<th style="width:70px">Description</th>
+				<th style="width:60px">P1 Description</th>
+                <th style="width:60px">P2 Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (Areas ar in AreasReceive)
+			{
+				
+                      <tr>
+                <td class="CustomerId">
+                    <span>@ar.Area_Id_Pk</span>
+                </td>
+                    <td class="Name">
+              @if (@ar.Area_Status.Value==1)
+                {
+                  <input type="checkbox" contentEditable="true" checked @oninput="CheckboxChanged" @onclick="@(()=>getId(ar.Area_Id_Pk))" />
+                }
+                    else
+                {
+                  <input type="checkbox" contentEditable="true"  @oninput="CheckboxChanged"  @onclick="@(()=>getId(ar.Area_Id_Pk))" />
+                }
+                  
+                </td>
+
+       <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind-value=ar.Area_Description class="border-none"></td>
+                       <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind=ar.Area_Partition_1 class="border-none"></td>
+      <td class="pt-3-half" contenteditable="true"><input type="text" name="add1" @bind=ar.Area_Partition_2 class="border-none"></td>
+            </tr>
+			}
+		</tbody>
+	</table>
+
+}
+<div class="footer">
+ 
+</div>
+
+
+@code {
+
+
+    private short idarea;
+    // Internal field holding checkbox state
+    private bool isChecked;
+    private void CheckboxChanged(ChangeEventArgs e)
+    {
+        bool x = (bool) e.Value;
+        // get the checkbox state
+        if (x)
+        {
+            if (AreaReceived.Rows.Count==0)
+                AreasLst[idarea-1].Area_Status = 1;
+
+            else 
+                AreasReceive[idarea-1].Area_Status = 1;
+
+        }
+
+
+
+
+    }  
+    private void getId(short id)
+    {
+        // get the checkbox state
+        idarea = id;
+
+    }
+    private Areas[] AreasLst;
+    private Areas[] AreasReceive;
+
+
+    SQLite.SQLiteConnection db = new SQLite.SQLiteConnection(dbPath);
+    protected override async Task OnInitializedAsync()
+    {
+        dtAreass =  (from i in db.Table<Areas>() select i);
+        dtAreas= ToDataTable<Areas>(dtAreass.ToList());
+         var areas = new AreaService(dtAreas);
+        AreasLst = await areas.GetForecastAsync(dtAreas,arealist );
+          StateHasChanged();
+    }
+    DataTable AreaReceived = new DataTable();
+    DataTable dtAreas = new DataTable();
+    DataTable dtreceive = new DataTable();  
+     
+    static string dbPath = Path.Combine(
+                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                 "AJAXs.db3");
+       public static DataTable ToDataTable<T>(List<T> items)
+        {
+            DataTable dataTable = new DataTable(typeof(T).Name);
+            //Get all the properties
+            PropertyInfo[] Props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (PropertyInfo prop in Props)
+            {
+                //Setting column names as Property names
+                dataTable.Columns.Add(prop.Name);
+            }
+            foreach (T item in items)
+            {
+                var values = new object[Props.Length];
+                for (int i = 0; i < Props.Length; i++)
+                {
+                    //inserting property values to datatable rows
+                    values[i] = Props[i].GetValue(item, null);
+                }
+                dataTable.Rows.Add(values);
+            }
+            //put a breakpoint here and check datatable
+            return dataTable;
+        }
+
+
+    IEnumerable<Areas> dtAreass ;
+    IEnumerable<BASKET_ADRS_CAMPI> dtreceives;
+    List<Areas> arealist = new List<Areas>();
+    List<Areas> arearc = new List<Areas>();
+
+
+
+
+}

@@ -1,0 +1,41 @@
+﻿<style>
+
+
+/* visited link */
+.nav-link:visited {
+  color: green;
+}
+.nav-link
+{color :dimgray;;}
+/* mouse over link */
+.nav-link:hover {
+  color: #00bc70;
+}
+.nav-link:active {
+  color: #00bc70;
+}
+/* selected link */
+
+</style>
+<ul class="nav nav-tabs">
+      <li class="nav-item">
+    <a  class="nav-link" @onclick="()=>onTabClick(0)">
+    General Options</a>
+    </li>
+    
+         <li class="nav-item">
+   <a class="nav-link" @onclick="()=>onTabClick(1)">
+System Parameters
+   </a>
+</li>
+</ul>
+
+@code {
+    [Parameter] public int ActivetabIndex {get;set;}
+     [Parameter] public EventCallback<int> ActivetabIndexchanged {get;set;}
+protected Task onTabClick(int tabIndex)
+{
+    ActivetabIndex = tabIndex ;
+    return ActivetabIndexchanged.InvokeAsync(ActivetabIndex);
+}
+}
